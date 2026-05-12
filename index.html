@@ -1,53 +1,33 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Flappy Bird</title>
-  <link rel="stylesheet" href="tes.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Flappy Bird Mobile</title>
+    <link rel="stylesheet" href="test.css">
 </head>
 <body>
 
-  <div class="background"></div>
-  <div class="ground" id="ground"></div>
-
-  <img class="bird" id="bird" src="Bird-2.png" alt="bird">
-
-  <!-- Pesan mulai -->
-  <div class="message" id="message">
-    <div class="message-box">
-      <h1>🐦 Flappy Bird</h1>
-      <p>Tekan <strong>Enter</strong> atau <strong>Spasi</strong> untuk mulai</p>
-      <p class="hint">📱 Di HP: sentuh layar untuk mulai &amp; lompat</p>
+    <div class="background"></div>
+    <img class="bird" src="Bird-2.png" alt="bird">
+    
+    <div class="score">
+        <span class="score_title">Score: </span>
+        <span class="score_val">0</span>
     </div>
-  </div>
 
-  <!-- Skor saat bermain -->
-  <div class="score">
-    <span class="score_title" id="scoreTitle"></span>
-    <span class="score_val" id="scoreVal"></span>
-  </div>
-
-  <!-- Game Over overlay -->
-  <div class="game_over_screen" id="gameOverScreen">
-    <div class="game_over_box">
-      <h2>Game Over!</h2>
-      <div class="medal" id="medal">💀</div>
-      <div class="score_row">
-        <span class="label">Skor</span>
-        <span class="value" id="finalScore">0</span>
-      </div>
-      <div class="score_row">
-        <span class="label">
-          Terbaik
-          <span class="new_best_badge" id="newBestBadge">BARU!</span>
-        </span>
-        <span class="value best" id="bestScoreDisplay">0</span>
-      </div>
-      <button class="restart_btn" onclick="restartGame()">▶ Main Lagi</button>
+    <div class="message">
+        Tekan Enter atau Tap Layar <br> Untuk Memulai
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <!-- UI Game Over -->
+    <div id="game-over-screen" class="game-over-card">
+        <h1>GAME OVER</h1>
+        <p>Skor Kamu</p>
+        <div id="final-score">0</div>
+        <button id="restart-btn">Main Lagi</button>
+    </div>
+
+    <script src="test.js"></script>
 </body>
 </html>
