@@ -1,64 +1,309 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    height: 100vh;
-    width: 100vw;
-  }
-  
-  .background {
-    height: 100vh;
-    width: 100vw;
-    background-image: url(bg\ bird2);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-  
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: 'Arial', sans-serif;
+  touch-action: none;
+}
+
+/* ===== BACKGROUND ===== */
+.background {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(180deg, #70c5ce 0%, #70c5ce 60%, #ded895 60%, #ded895 65%, #4ec94e 65%, #4ec94e 100%);
+  position: fixed;
+  top: 0; left: 0;
+  overflow: hidden;
+}
+
+/* Awan dekorasi */
+.background::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 15%;
+  width: 80px;
+  height: 30px;
+  background: rgba(255,255,255,0.8);
+  border-radius: 50px;
+  box-shadow:
+    120px 20px 0 rgba(255,255,255,0.7),
+    240px -5px 0 60px rgba(255,255,255,0.6),
+    400px 15px 0 rgba(255,255,255,0.8),
+    -60px 40px 0 50px rgba(255,255,255,0.5);
+}
+
+/* ===== TANAH ===== */
+.ground {
+  position: fixed;
+  bottom: 0;
+  width: 100vw;
+  height: 5vh;
+  min-height: 30px;
+  background: repeating-linear-gradient(
+    90deg,
+    #8B6914 0px, #A0832A 20px, #8B6914 40px
+  );
+  z-index: 80;
+  border-top: 3px solid #6d5010;
+}
+
+/* ===== BURUNG ===== */
+.bird {
+  height: 60px;
+  width: 60px;
+  position: fixed;
+  top: 40vh;
+  left: 25vw;
+  z-index: 100;
+  object-fit: contain;
+}
+
+/* ===== PIPA ===== */
+.pipe_sprite {
+  position: fixed;
+  left: 100vw;
+  width: 8vw;
+  min-width: 50px;
+  max-width: 80px;
+  background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 30%, #4CAF50 70%, #388E3C 100%);
+  border: 2px solid #2E7D32;
+  z-index: 50;
+}
+
+.pipe_sprite.top {
+  border-radius: 0 0 6px 6px;
+  border-top: none;
+}
+
+.pipe_sprite.bottom {
+  border-radius: 6px 6px 0 0;
+  border-bottom: none;
+}
+
+/* Tutup pipa */
+.pipe_sprite::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  width: calc(100% + 12px);
+  height: 20px;
+  background: linear-gradient(90deg, #43A047, #66BB6A, #43A047);
+  border: 2px solid #2E7D32;
+  border-radius: 4px;
+}
+
+.pipe_sprite.top::after {
+  bottom: 0;
+}
+
+.pipe_sprite.bottom::after {
+  top: 0;
+}
+
+/* ===== SKOR ===== */
+.score {
+  position: fixed;
+  z-index: 150;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.score_title {
+  font-size: clamp(16px, 3vw, 22px);
+  color: white;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+  font-weight: bold;
+  display: block;
+}
+
+.score_val {
+  font-size: clamp(36px, 8vw, 64px);
+  color: white;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+  font-weight: 900;
+  display: block;
+  line-height: 1;
+}
+
+/* ===== PESAN MULAI ===== */
+.message {
+  position: fixed;
+  z-index: 150;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.message-box {
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  padding: 28px 36px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.message-box h1 {
+  font-size: clamp(28px, 8vw, 52px);
+  font-weight: 900;
+  color: #4ec94e;
+  text-shadow: 3px 3px 0 #2E7D32;
+  margin-bottom: 12px;
+}
+
+.message-box p {
+  font-size: clamp(14px, 3vw, 18px);
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.message-box .hint {
+  font-size: clamp(12px, 2.5vw, 15px);
+  color: #888;
+}
+
+.message.hidden {
+  display: none;
+}
+
+/* ===== GAME OVER OVERLAY ===== */
+.game_over_screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.6);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+
+.game_over_screen.active {
+  display: flex;
+}
+
+.game_over_box {
+  background: white;
+  border-radius: 24px;
+  padding: 32px 40px;
+  text-align: center;
+  min-width: 280px;
+  max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.game_over_box h2 {
+  font-size: clamp(24px, 6vw, 36px);
+  font-weight: 900;
+  color: #e53935;
+  margin-bottom: 6px;
+}
+
+.game_over_box .medal {
+  font-size: 52px;
+  margin: 8px 0;
+}
+
+.score_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.score_row:last-of-type {
+  border-bottom: none;
+}
+
+.score_row .label {
+  font-size: 14px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.score_row .value {
+  font-size: clamp(22px, 5vw, 32px);
+  font-weight: 900;
+  color: #f5a623;
+}
+
+.score_row .value.best {
+  color: #4CAF50;
+}
+
+.new_best_badge {
+  display: none;
+  background: #ff6b35;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.new_best_badge.show {
+  display: inline;
+}
+
+.restart_btn {
+  margin-top: 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 0;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 800;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.02em;
+  transition: transform 0.1s, background 0.2s;
+  box-shadow: 0 4px 0 #388E3C;
+}
+
+.restart_btn:hover  { background: #43A047; }
+.restart_btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #388E3C; }
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 480px) {
   .bird {
-    height: 80px;
-    width: 80px;
-    position: fixed;
-    top: 40vh;
-    left: 30vw;
-    z-index: 100;
+    height: 45px;
+    width: 45px;
   }
-  
   .pipe_sprite {
-    position: fixed;
-    top: 40vh;
-    left: 100vw;
-    height: 70vh;
-    width: 6vw;
-    background-color: green;
+    width: 12vw;
   }
-  
-  .message {
-    position: fixed;
-    z-index: 10;
-    height: 10vh;
-    font-size: 10vh;
-    font-weight: 100;
-    color: black;
-    top: 12vh;
-    left: 20vw;
-    text-align: center;
+  .game_over_box {
+    padding: 24px 20px;
+    min-width: 240px;
   }
-  
-  .score {
-    position: fixed;
-    z-index: 10;
-    height: 10vh;
-    font-size: 10vh;
-    font-weight: 100;
-    color: black;
-    top: 0;
-    left: 0;
+  .message-box {
+    white-space: normal;
+    padding: 20px 24px;
   }
-  
-  .score_val {
-    color: gold;
-  }
+}
