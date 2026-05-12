@@ -1,161 +1,242 @@
-// Background scrolling speed
+// ===== KONFIGURASI =====
 let move_speed = 3;
-
-// Gravity constant value
 let gravity = 0.5;
 
-// Getting reference to the bird element
-let bird = document.querySelector('.bird');
+// ===== ELEMEN =====
+let bird        = document.getElementById('bird');
+let ground      = document.getElementById('ground');
+let scoreVal    = document.getElementById('scoreVal');
+let scoreTitle  = document.getElementById('scoreTitle');
+let message     = document.getElementById('message');
+let gameOverScreen    = document.getElementById('gameOverScreen');
+let finalScoreEl      = document.getElementById('finalScore');
+let bestScoreDisplay  = document.getElementById('bestScoreDisplay');
+let newBestBadge      = document.getElementById('newBestBadge');
+let medalEl           = document.getElementById('medal');
 
-// Getting bird element properties
-let bird_props = bird.getBoundingClientRect();
-
-let background = document.querySelector('.background').getBoundingClientRect();
-
-// Getting reference to the score element
-let score_val = document.querySelector('.score_val');
-
-let message = document.querySelector('.message');
-
-let score_title = document.querySelector('.score_title');
-
-// Add sound effects
-let jumpSound = new Audio('jump.mp3');
-let crashSound = new Audio('crash.wav');
-let scoreSound = new Audio('point.wav');
-let startSound = new Audio('start.mp3'); // New sound effect for game start
-
-// Setting initial game state to start
+// ===== STATE =====
 let game_state = 'Start';
+let best_score = parseInt(localStorage.getItem('flappy_best') || '0');
+bestScoreDisplay.innerHTML = best_score;
 
-// Add an eventlistener for key presses
+// ===== SOUND EFFECTS (Web Audio API, tidak perlu file .mp3) =====
+function makeSound(freq, duration, type = 'sine') {
+  try {
+    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let osc  = ctx.createOscillator();
+    let gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playJump()  { makeSound(500, 0.1, 'square'); makeSound(700, 0.08, 'square'); }
+function playCrash() { makeSound(200, 0.3, 'sawtooth'); makeSound(100, 0.5, 'sawtooth'); }
+function playScore() { makeSound(800, 0.05); makeSound(1000, 0.1); }
+function playStart() { makeSound(400, 0.1); makeSound(600, 0.1); makeSound(800, 0.2); }
+
+// ===== GAME OVER =====
+function showGameOver() {
+  let current = parseInt(scoreVal.innerHTML) || 0;
+  finalScoreEl.innerHTML = current;
+
+  let isNewBest = current > best_score;
+  if (isNewBest) {
+    best_score = current;
+    localStorage.setItem('flappy_best', best_score);
+    newBestBadge.classList.add('show');
+  } else {
+    newBestBadge.classList.remove('show');
+  }
+
+  bestScoreDisplay.innerHTML = best_score;
+
+  // Medal sesuai skor
+  if      (current === 0)  medalEl.innerHTML = '💀';
+  else if (current < 5)    medalEl.innerHTML = '🥉';
+  else if (current < 15)   medalEl.innerHTML = '🥈';
+  else if (current < 30)   medalEl.innerHTML = '🥇';
+  else                     medalEl.innerHTML = '🏆';
+
+  gameOverScreen.classList.add('active');
+  playCrash();
+}
+
+// ===== RESTART =====
+function restartGame() {
+  gameOverScreen.classList.remove('active');
+  document.querySelectorAll('.pipe_sprite').forEach(e => e.remove());
+
+  // Reset posisi & rotasi burung
+  bird.style.top = '40vh';
+  bird.style.transform = 'rotate(0deg)';
+
+  // Reset kecepatan
+  move_speed = 3;
+
+  // Reset skor
+  game_state = 'Play';
+  message.classList.add('hidden');
+  scoreTitle.innerHTML = 'Skor';
+  scoreVal.innerHTML = '0';
+
+  playStart();
+  play();
+}
+
+// ===== INPUT: KEYBOARD =====
 document.addEventListener('keydown', (e) => {
-  // Start the game if enter key is pressed
-  if (e.key == 'Enter' && game_state != 'Play') {
-    document.querySelectorAll('.pipe_sprite').forEach((e) => {
-      e.remove();
-    });
-    bird.style.top = '40vh';
-    game_state = 'Play';
-    message.innerHTML = '';
-    score_title.innerHTML = 'Score : ';
-    score_val.innerHTML = '0';
-    startSound.play(); // Play start sound effect
-    play();
+  if ((e.key === 'Enter' || e.key === ' ') && game_state === 'Start') {
+    restartGame();
   }
 });
 
+// ===== INPUT: TOUCH (mulai game) =====
+document.addEventListener('touchstart', (e) => {
+  if (game_state === 'Start') {
+    e.preventDefault();
+    restartGame();
+  }
+}, { passive: false });
+
+// ===== MAIN GAME LOOP =====
 function play() {
+  let groundRect = ground.getBoundingClientRect();
+  let bird_props = bird.getBoundingClientRect();
+
+  // ----- PIPE MOVEMENT -----
   function move() {
-    // Detect if game has ended
-    if (game_state != 'Play') return;
+    if (game_state !== 'Play') return;
 
-    // Getting reference to all the pipe elements
-    let pipe_sprite = document.querySelectorAll('.pipe_sprite');
+    bird_props = bird.getBoundingClientRect();
 
-    pipe_sprite.forEach((element) => {
-      let pipe_sprite_props = element.getBoundingClientRect();
+    document.querySelectorAll('.pipe_sprite').forEach((el) => {
+      let pp = el.getBoundingClientRect();
 
-      bird_props = bird.getBoundingClientRect();
-
-      // Delete the pipes if they have moved out of the screen hence saving memory
-      if (pipe_sprite_props.right <= 0) {
-        element.remove();
-      } else {
-        // Collision detection with bird and pipes
-        if (
-          bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width &&
-          bird_props.left + bird_props.width > pipe_sprite_props.left &&
-          bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height &&
-          bird_props.top + bird_props.height > pipe_sprite_props.top
-        ) {
-          // Change game state and end the game if collision occurs
-          game_state = 'End';
-          message.innerHTML = 'Press Enter To Restart';
-          message.style.left = '28vw';
-          crashSound.play(); // Play crash sound effect
-          return;
-        } else {
-          // Increase the score if player has successfully dodged the pipe
-          if (
-            pipe_sprite_props.right < bird_props.left &&
-            pipe_sprite_props.right + move_speed >= bird_props.left &&
-            element.increase_score == '1'
-          ) {
-            score_val.innerHTML = +score_val.innerHTML + 1;
-            scoreSound.play(); // Play score sound effect
-          }
-          element.style.left = pipe_sprite_props.left - move_speed + 'px';
-        }
+      // Hapus pipa yang sudah keluar layar
+      if (pp.right <= 0) {
+        el.remove();
+        return;
       }
+
+      // Deteksi tabrakan burung vs pipa
+      if (
+        bird_props.left   < pp.left + pp.width  &&
+        bird_props.left   + bird_props.width > pp.left &&
+        bird_props.top    < pp.top + pp.height  &&
+        bird_props.top    + bird_props.height > pp.top
+      ) {
+        game_state = 'End';
+        showGameOver();
+        return;
+      }
+
+      // Tambah skor saat berhasil lewati pipa
+      if (
+        pp.right < bird_props.left &&
+        pp.right + move_speed >= bird_props.left &&
+        el.dataset.scoreable === '1'
+      ) {
+        let cur = parseInt(scoreVal.innerHTML) + 1;
+        scoreVal.innerHTML = cur;
+        playScore();
+
+        // Tambah kecepatan setiap 10 poin
+        if (cur % 10 === 0) move_speed += 0.5;
+      }
+
+      el.style.left = pp.left - move_speed + 'px';
     });
+
     requestAnimationFrame(move);
   }
   requestAnimationFrame(move);
 
+  // ----- GRAVITY & PHYSICS -----
   let bird_dy = 0;
 
-  function apply_gravity() {
-    if (game_state != 'Play') return;
+  function applyGravity() {
+    if (game_state !== 'Play') return;
 
-    bird_dy = bird_dy + gravity;
+    bird_dy   += gravity;
+    bird_props = bird.getBoundingClientRect();
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key == 'ArrowUp' || e.key == ' ' || e.key == 'w' || e.key == 'W') {
-        bird_dy = -7.6;
-        jumpSound.currentTime = 0;
-        jumpSound.volume = 0.2;
-        jumpSound.play(); // Play jump sound effect
-      }
-    });
+    // Kemiringan burung mengikuti kecepatan vertikal
+    let tilt = Math.min(bird_dy * 3, 90);
+    bird.style.transform = `rotate(${tilt}deg)`;
 
-    // Collision detection with bird and window top and bottom
-    if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
+    // Tabrakan dengan langit-langit atau tanah
+    if (bird_props.top <= 0 || bird_props.bottom >= groundRect.top) {
       game_state = 'End';
-      message.innerHTML = 'Press Enter To Restart';
-      message.style.left = '28vw';
+      showGameOver();
       return;
     }
+
     bird.style.top = bird_props.top + bird_dy + 'px';
-    bird_props = bird.getBoundingClientRect();
-    requestAnimationFrame(apply_gravity);
+    requestAnimationFrame(applyGravity);
   }
-  requestAnimationFrame(apply_gravity);
+  requestAnimationFrame(applyGravity);
 
-  let pipe_seperation = 0;
+  // ----- JUMP -----
+  function doJump() {
+    if (game_state !== 'Play') return;
+    bird_dy = -7.6;
+    playJump();
+  }
 
-  // Constant value for the gap between two pipes
-  let pipe_gap = 35;
+  // Keyboard jump
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w' || e.key === 'W') {
+      doJump();
+    }
+  });
 
-  function create_pipe() {
-    if (game_state != 'Play') return;
+  // Touch jump
+  document.addEventListener('touchstart', (e) => {
+    if (game_state !== 'Play') return;
+    e.preventDefault();
+    doJump();
+  }, { passive: false });
 
-    // Create another set of pipes if distance between two pipe has exceeded a predefined value
-    if (pipe_seperation > 115) {
-      pipe_seperation = 0;
+  // ----- PIPE SPAWNER -----
+  let pipe_separation = 0;
+  let pipe_gap = 38; // jarak antar pipa atas & bawah (vh)
 
-      // Calculate random position of pipes on y axis
-      let pipe_posi = Math.floor(Math.random() * 43) + 8;
+  function createPipe() {
+    if (game_state !== 'Play') return;
 
-      let pipe_sprite_inv = document.createElement('div');
-      pipe_sprite_inv.className = 'pipe_sprite';
-      pipe_sprite_inv.style.top = pipe_posi - 70 + 'vh';
-      pipe_sprite_inv.style.left = '100vw';
+    if (pipe_separation > 115) {
+      pipe_separation = 0;
 
-           // Append the created pipe element in DOM
-           document.body.appendChild(pipe_sprite_inv);
+      // Posisi acak untuk pipa (vh)
+      let pipe_posi = Math.floor(Math.random() * 40) + 10;
 
-           let pipe_sprite = document.createElement('div');
-           pipe_sprite.className = 'pipe_sprite';
-           pipe_sprite.style.top = pipe_posi + pipe_gap + 'vh';
-           pipe_sprite.style.left = '100vw';
-           pipe_sprite.increase_score = '1';
-     
-           // Append the created pipe element in DOM
-           document.body.appendChild(pipe_sprite);
-         }
-         pipe_seperation++;
-         requestAnimationFrame(create_pipe);
-       }
-       requestAnimationFrame(create_pipe);
-     }
+      // Pipa atas
+      let pipeTop = document.createElement('div');
+      pipeTop.className = 'pipe_sprite top';
+      pipeTop.style.top    = (pipe_posi - 70) + 'vh';
+      pipeTop.style.left   = '100vw';
+      pipeTop.style.height = '70vh';
+      document.body.appendChild(pipeTop);
+
+      // Pipa bawah (pencatat skor)
+      let pipeBot = document.createElement('div');
+      pipeBot.className = 'pipe_sprite bottom';
+      pipeBot.style.top    = (pipe_posi + pipe_gap) + 'vh';
+      pipeBot.style.left   = '100vw';
+      pipeBot.style.height = '70vh';
+      pipeBot.dataset.scoreable = '1';
+      document.body.appendChild(pipeBot);
+    }
+
+    pipe_separation++;
+    requestAnimationFrame(createPipe);
+  }
+  requestAnimationFrame(createPipe);
+}
