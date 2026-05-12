@@ -1,136 +1,161 @@
-let move_speed = 3, gravity = 0.5;
+// Background scrolling speed
+let move_speed = 3;
+
+// Gravity constant value
+let gravity = 0.5;
+
+// Getting reference to the bird element
 let bird = document.querySelector('.bird');
+
+// Getting bird element properties
 let bird_props = bird.getBoundingClientRect();
+
 let background = document.querySelector('.background').getBoundingClientRect();
 
+// Getting reference to the score element
 let score_val = document.querySelector('.score_val');
-let message = document.querySelector('.message');
-let game_over_screen = document.getElementById('game-over-screen');
-let final_score_text = document.getElementById('final-score');
-let restart_btn = document.getElementById('restart-btn');
 
+let message = document.querySelector('.message');
+
+let score_title = document.querySelector('.score_title');
+
+// Add sound effects
+let jumpSound = new Audio('jump.mp3');
+let crashSound = new Audio('crash.wav');
+let scoreSound = new Audio('point.wav');
+let startSound = new Audio('start.mp3'); // New sound effect for game start
+
+// Setting initial game state to start
 let game_state = 'Start';
 
-// Memulai Game
-function initGame() {
-    if (game_state == 'Start') {
-        document.querySelectorAll('.pipe_sprite').forEach((e) => e.remove());
-        bird.style.top = '40vh';
-        bird.style.display = 'block';
-        game_state = 'Play';
-        message.style.display = 'none';
-        game_over_screen.style.display = 'none';
-        score_val.innerHTML = '0';
-        play();
-    }
-}
-
-// Event Listeners untuk Start
+// Add an eventlistener for key presses
 document.addEventListener('keydown', (e) => {
-    if (e.key == 'Enter') initGame();
-});
-
-document.addEventListener('touchstart', (e) => {
-    if (game_state == 'Start') initGame();
-});
-
-// Tombol Restart
-restart_btn.addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    game_state = 'Start';
-    game_over_screen.style.display = 'none';
-    message.style.display = 'block';
+  // Start the game if enter key is pressed
+  if (e.key == 'Enter' && game_state != 'Play') {
+    document.querySelectorAll('.pipe_sprite').forEach((e) => {
+      e.remove();
+    });
+    bird.style.top = '40vh';
+    game_state = 'Play';
+    message.innerHTML = '';
+    score_title.innerHTML = 'Score : ';
+    score_val.innerHTML = '0';
+    startSound.play(); // Play start sound effect
+    play();
+  }
 });
 
 function play() {
-    function move() {
-        if (game_state != 'Play') return;
+  function move() {
+    // Detect if game has ended
+    if (game_state != 'Play') return;
 
-        let pipe_sprite = document.querySelectorAll('.pipe_sprite');
-        pipe_sprite.forEach((element) => {
-            let pipe_props = element.getBoundingClientRect();
-            bird_props = bird.getBoundingClientRect();
+    // Getting reference to all the pipe elements
+    let pipe_sprite = document.querySelectorAll('.pipe_sprite');
 
-            if (pipe_props.right <= 0) {
-                element.remove();
-            } else {
-                if (bird_props.left < pipe_props.left + pipe_props.width && 
-                    bird_props.left + bird_props.width > pipe_props.left && 
-                    bird_props.top < pipe_props.top + pipe_props.height && 
-                    bird_props.top + bird_props.height > pipe_props.top) {
-                    
-                    handleGameOver();
-                    return;
-                } else {
-                    if (pipe_props.right < bird_props.left && pipe_props.right + move_speed >= bird_props.left && element.increase_score == '1') {
-                        score_val.innerHTML = parseInt(score_val.innerHTML) + 1;
-                    }
-                    element.style.left = pipe_props.left - move_speed + 'px';
-                }
-            }
-        });
-        requestAnimationFrame(move);
-    }
+    pipe_sprite.forEach((element) => {
+      let pipe_sprite_props = element.getBoundingClientRect();
+
+      bird_props = bird.getBoundingClientRect();
+
+      // Delete the pipes if they have moved out of the screen hence saving memory
+      if (pipe_sprite_props.right <= 0) {
+        element.remove();
+      } else {
+        // Collision detection with bird and pipes
+        if (
+          bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width &&
+          bird_props.left + bird_props.width > pipe_sprite_props.left &&
+          bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height &&
+          bird_props.top + bird_props.height > pipe_sprite_props.top
+        ) {
+          // Change game state and end the game if collision occurs
+          game_state = 'End';
+          message.innerHTML = 'Press Enter To Restart';
+          message.style.left = '28vw';
+          crashSound.play(); // Play crash sound effect
+          return;
+        } else {
+          // Increase the score if player has successfully dodged the pipe
+          if (
+            pipe_sprite_props.right < bird_props.left &&
+            pipe_sprite_props.right + move_speed >= bird_props.left &&
+            element.increase_score == '1'
+          ) {
+            score_val.innerHTML = +score_val.innerHTML + 1;
+            scoreSound.play(); // Play score sound effect
+          }
+          element.style.left = pipe_sprite_props.left - move_speed + 'px';
+        }
+      }
+    });
     requestAnimationFrame(move);
+  }
+  requestAnimationFrame(move);
 
-    let bird_dy = 0;
-    function apply_gravity() {
-        if (game_state != 'Play') return;
-        bird_dy = bird_dy + gravity;
+  let bird_dy = 0;
 
-        const jump = () => { bird_dy = -8; };
+  function apply_gravity() {
+    if (game_state != 'Play') return;
 
-        document.onkeydown = (e) => {
-            if (e.key == 'ArrowUp' || e.key == ' ') jump();
-        };
-        
-        document.ontouchstart = () => {
-            if(game_state == 'Play') jump();
-        };
+    bird_dy = bird_dy + gravity;
 
-        if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
-            handleGameOver();
-            return;
-        }
+    document.addEventListener('keydown', (e) => {
+      if (e.key == 'ArrowUp' || e.key == ' ' || e.key == 'w' || e.key == 'W') {
+        bird_dy = -7.6;
+        jumpSound.currentTime = 0;
+        jumpSound.volume = 0.2;
+        jumpSound.play(); // Play jump sound effect
+      }
+    });
 
-        bird.style.top = bird_props.top + bird_dy + 'px';
-        bird_props = bird.getBoundingClientRect();
-        requestAnimationFrame(apply_gravity);
+    // Collision detection with bird and window top and bottom
+    if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
+      game_state = 'End';
+      message.innerHTML = 'Press Enter To Restart';
+      message.style.left = '28vw';
+      return;
     }
+    bird.style.top = bird_props.top + bird_dy + 'px';
+    bird_props = bird.getBoundingClientRect();
     requestAnimationFrame(apply_gravity);
+  }
+  requestAnimationFrame(apply_gravity);
 
-    let pipe_separation = 0;
-    let pipe_gap = 35; 
+  let pipe_seperation = 0;
 
-    function create_pipe() {
-        if (game_state != 'Play') return;
+  // Constant value for the gap between two pipes
+  let pipe_gap = 35;
 
-        if (pipe_separation > 115) {
-            pipe_separation = 0;
-            let pipe_posi = Math.floor(Math.random() * 43) + 8;
-            
-            let pipe_sprite_inv = document.createElement('div');
-            pipe_sprite_inv.className = 'pipe_sprite';
-            pipe_sprite_inv.style.top = pipe_posi - 70 + 'vh';
-            pipe_sprite_inv.style.left = '100vw';
-            document.body.appendChild(pipe_sprite_inv);
+  function create_pipe() {
+    if (game_state != 'Play') return;
 
-            let pipe_sprite = document.createElement('div');
-            pipe_sprite.className = 'pipe_sprite';
-            pipe_sprite.style.top = pipe_posi + pipe_gap + 'vh';
-            pipe_sprite.style.left = '100vw';
-            pipe_sprite.increase_score = '1';
-            document.body.appendChild(pipe_sprite);
-        }
-        pipe_separation++;
-        requestAnimationFrame(create_pipe);
-    }
-    requestAnimationFrame(create_pipe);
-}
+    // Create another set of pipes if distance between two pipe has exceeded a predefined value
+    if (pipe_seperation > 115) {
+      pipe_seperation = 0;
 
-function handleGameOver() {
-    game_state = 'End';
-    bird.style.display = 'none';
-    game_over_screen.style.display = 'block';
-    final_score_text.innerHTML = score_val.innerHTML;
-}
+      // Calculate random position of pipes on y axis
+      let pipe_posi = Math.floor(Math.random() * 43) + 8;
+
+      let pipe_sprite_inv = document.createElement('div');
+      pipe_sprite_inv.className = 'pipe_sprite';
+      pipe_sprite_inv.style.top = pipe_posi - 70 + 'vh';
+      pipe_sprite_inv.style.left = '100vw';
+
+           // Append the created pipe element in DOM
+           document.body.appendChild(pipe_sprite_inv);
+
+           let pipe_sprite = document.createElement('div');
+           pipe_sprite.className = 'pipe_sprite';
+           pipe_sprite.style.top = pipe_posi + pipe_gap + 'vh';
+           pipe_sprite.style.left = '100vw';
+           pipe_sprite.increase_score = '1';
+     
+           // Append the created pipe element in DOM
+           document.body.appendChild(pipe_sprite);
+         }
+         pipe_seperation++;
+         requestAnimationFrame(create_pipe);
+       }
+       requestAnimationFrame(create_pipe);
+     }
