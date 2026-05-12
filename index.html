@@ -1,18 +1,54 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <link rel="icon" type="image/png" href="favicon.ico">
-    <title>Flappy Bird</title>
-    <link rel="stylesheet" href="test.css">
-  </head>
-  <body>  
-    <div class="background"></div>
-    <img class="bird" src="Bird.png">
-    <div class="message">Press Enter To Start Game</div>
-    <div class="score">
-      <span class="score_title"></span>
-      <span class="score_val"></span>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flappy Bird</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="background"></div>
+  <div class="ground" id="ground"></div>
+
+  <!-- Burung pakai gambar asli -->
+  <img class="bird" id="bird" src="Bird.png" alt="bird">
+
+  <!-- Pesan mulai -->
+  <div class="message" id="message">
+    <div class="message-box">
+      <h1>🐦 Flappy Bird</h1>
+      <p>Tekan <strong>Enter</strong> atau <strong>Spasi</strong> untuk mulai</p>
+      <p class="hint">📱 Di HP: sentuh layar untuk mulai &amp; lompat</p>
     </div>
-    <script src="test.js"></script>
-  </body>
+  </div>
+
+  <!-- Skor saat bermain -->
+  <div class="score">
+    <span class="score_title" id="scoreTitle"></span>
+    <span class="score_val" id="scoreVal"></span>
+  </div>
+
+  <!-- Game Over overlay -->
+  <div class="game_over_screen" id="gameOverScreen">
+    <div class="game_over_box">
+      <h2>Game Over!</h2>
+      <div class="medal" id="medal">💀</div>
+      <div class="score_row">
+        <span class="label">Skor</span>
+        <span class="value" id="finalScore">0</span>
+      </div>
+      <div class="score_row">
+        <span class="label">
+          Terbaik
+          <span class="new_best_badge" id="newBestBadge">BARU!</span>
+        </span>
+        <span class="value best" id="bestScoreDisplay">0</span>
+      </div>
+      <button class="restart_btn" onclick="restartGame()">▶ Main Lagi</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
