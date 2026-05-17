@@ -7,8 +7,10 @@ const currentScoreText = document.getElementById('currentScore');
 const bestScoreText = document.getElementById('bestScore');
 const restartBtn = document.getElementById('restartBtn');
 
-// Seleksi Elemen Audio
+// Seleksi Elemen Audio Lengkap
+const bgMusic = document.getElementById('bgMusic');
 const soundJump = document.getElementById('soundJump');
+const soundPoint = document.getElementById('soundPoint');
 const soundCrash = document.getElementById('soundCrash');
 
 // Variabel State Game
@@ -42,9 +44,9 @@ function handleInput(e) {
     if (e.key === ' ' || e.key === 'ArrowUp' || e.type === 'touchstart') {
       bird_dy = jump_strength;
       
-      // Mainkan efek suara Lompat
-      soundJump.currentTime = 0; // Reset ke awal biar responsif saat di-spam
-      soundJump.play().catch(err => console.log("Audio play diblokir browser sebelum interaksi:", err));
+      // 1. Efek suara saat melompat/di-tap
+      soundJump.currentTime = 0; 
+      soundJump.play().catch(err => console.log("Audio play diblokir:", err));
     }
   }
 }
@@ -62,6 +64,10 @@ function startGame() {
   scoreVal.innerHTML = score;
   gameOverScreen.style.display = 'none';
   pipe_timer = 0;
+
+  // 2. Mainkan musik background (start.mp3) saat game mulai
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(err => console.log("Menunggu interaksi pertama untuk BGM..."));
   
   document.querySelectorAll('.pipe_sprite').forEach(pipe => pipe.remove());
   
@@ -135,6 +141,10 @@ function updateGame() {
         if (pipe.classList.contains('pipe_top')) {
           score++;
           scoreVal.innerHTML = score;
+          
+          // 3. Suara saat berhasil melewati pipa (point.wav)
+          soundPoint.currentTime = 0;
+          soundPoint.play().catch(err => console.log(err));
         }
       }
       pipe.style.left = (pipe_left - (pipe_speed * 0.1)) + 'vw';
@@ -149,9 +159,10 @@ function endGame() {
   game_state = 'End';
   cancelAnimationFrame(animation_id);
   
-  // Mainkan efek suara Tabrakan
+  // 4. Matikan musik background, ganti dengan suara tabrakan (crash.wav)
+  bgMusic.pause();
   soundCrash.currentTime = 0;
-  soundCrash.play().catch(err => console.log("Audio play error:", err));
+  soundCrash.play().catch(err => console.log("Audio crash error:", err));
   
   if (score > high_score) {
     high_score = score;
