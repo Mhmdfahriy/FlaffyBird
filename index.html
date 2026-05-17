@@ -1,18 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
   <head>
-    <link rel="icon" type="image/png" href="favicon.ico">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Flappy Bird</title>
-    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="tes.css" />
   </head>
-  <body>  
-    <div class="background"></div>
-    <img class="bird" src="Bird.png">
-    <div class="message">Press Enter To Start Game</div>
-    <div class="score">
-      <span class="score_title"></span>
-      <span class="score_val"></span>
+  <body>
+    <div id="game-root">
+      <div id="bg"></div>
+      <div id="ground"></div>
+      <div id="bird-container">
+        <img id="bird-img" src="Bird-2.png" alt="bird" />
+      </div>
+      <div id="score-display">
+        <div id="score-num">0</div>
+      </div>
+      <div id="flash"></div>
+      <div id="overlay">
+        <div id="panel">
+          <div id="medal"></div>
+          <div id="panel-title">FLAPPY BIRD</div>
+          <div id="panel-sub">Tap atau tekan Spasi untuk terbang!</div>
+          <div id="score-rows">
+            <div class="score-row">
+              <span class="score-label">Skor</span>
+              <span class="score-value" id="cur-score-val">0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">Tertinggi</span>
+              <span class="score-value gold" id="high-score-val">0</span>
+            </div>
+          </div>
+          <button id="play-btn">▶  MAIN</button>
+        </div>
+        <div id="hint">Tap layar / Spasi / ↑ untuk loncat</div>
+      </div>
     </div>
-    <script src="test.js"></script>
+    <script src="game.js"></script>
   </body>
 </html>
