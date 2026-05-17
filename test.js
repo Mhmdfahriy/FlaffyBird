@@ -1,184 +1,156 @@
-// Background scrolling speed
-let move_speed = 3;
-
-// Gravity constant value
-let gravity = 0.5;
-
-// Getting reference to the bird element
-let bird = document.querySelector('.bird');
-
-// Getting bird element properties
-let bird_props = bird.getBoundingClientRect();
-let background = document.querySelector('.background').getBoundingClientRect();
-
-// Getting reference to UI elements
-let score_val = document.querySelector('.score_val');
-let message = document.querySelector('.message');
-let score_title = document.querySelector('.score_title');
-
-// Objek Audio Bawaan kamu
-let jumpSound = new Audio('jump.mp3');
-let crashSound = new Audio('crash.wav');
-let scoreSound = new Audio('point.wav');
-let startSound = new Audio('start.mp3'); 
-
-// Set agar musik start ngeloop (mengulang terus saat main)
-startSound.loop = true; 
-
-// Setting initial game state to start
+let move_speed = 0.6; 
+let gravity = 0.35;
+let bird_dy = 0;
+let score = 0;
 let game_state = 'Start';
 
-// Mendukung Laptop (keydown) dan HP (touchstart) untuk Start Game
-document.addEventListener('keydown', handleStart);
-document.addEventListener('touchstart', handleStart);
+// Seleksi DOM
+const bird = document.querySelector('.bird');
+const score_val = document.querySelector('.score_val');
+const message_container = document.querySelector('.message-container');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
 
-function handleStart(e) {
-  // Jalankan jika tekan Enter (laptop) atau Sentuh Layar (HP) saat Game Belum Mulai
-  if ((e.key == 'Enter' || e.type == 'touchstart') && game_state != 'Play') {
-    
-    // Cegah ngelag / double-trigger di HP
-    if(e.type === 'touchstart' && e.target.id === 'restartBtn') return; 
+// Audio
+const bgMusic = document.getElementById('bgMusic');
+const soundJump = document.getElementById('soundJump');
+const soundPoint = document.getElementById('soundPoint');
+const soundCrash = document.getElementById('soundCrash');
 
-    document.querySelectorAll('.pipe_sprite').forEach((el) => {
-      el.remove();
-    });
-    
-    bird.style.top = '40vh';
-    game_state = 'Play';
-    message.innerHTML = '';
-    score_title.innerHTML = 'Score : ';
-    score_val.innerHTML = '0';
-    
-    // === FIX START.MP3 ===
-    // Pancingan paksa agar browser mengizinkan audio berjalan
-    startSound.currentTime = 0;
-    startSound.volume = 0.4;
-    startSound.play().catch(err => console.log("Musik start dicoba putar ulang...", err));
+// High Score
+let high_score = localStorage.getItem('fb_best') || 0;
 
-    play();
-  }
+// Event Listeners
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && game_state !== 'Play') startGame();
+    if ((e.key === ' ' || e.key === 'ArrowUp') && game_state === 'Play') fly();
+});
+window.addEventListener('touchstart', (e) => {
+    if (game_state === 'Play') fly();
+});
+
+function fly() {
+    bird_dy = -6.5; // Kekuatan lompat
+    soundJump.currentTime = 0;
+    soundJump.play().catch(() => {});
 }
 
-function play() {
-  function move() {
-    if (game_state != 'Play') return;
+function startGame() {
+    game_state = 'Play';
+    score = 0;
+    bird_dy = 0;
+    score_val.innerHTML = '0';
+    message_container.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+    bird.style.display = 'block';
+    bird.style.top = '40vh';
 
-    let pipe_sprite = document.querySelectorAll('.pipe_sprite');
+    // Hapus pipa lama
+    document.querySelectorAll('.pipe_sprite').forEach(p => p.remove());
 
-    pipe_sprite.forEach((element) => {
-      let pipe_sprite_props = element.getBoundingClientRect();
-      bird_props = bird.getBoundingClientRect();
+    // Pancing Audio (Wajib untuk Chrome HP)
+    bgMusic.play().catch(() => {});
+    soundPoint.play().then(()=> {soundPoint.pause(); soundPoint.currentTime=0;});
 
-      if (pipe_sprite_props.right <= 0) {
-        element.remove();
-      } else {
-        // Collision detection with bird and pipes
-        if (
-          bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width &&
-          bird_props.left + bird_props.width > pipe_sprite_props.left &&
-          bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height &&
-          bird_props.top + bird_props.height > pipe_sprite_props.top
-        ) {
-          game_state = 'End';
-          message.innerHTML = 'Press Enter / Tap to Restart';
-          
-          startSound.pause(); // Hentikan musik saat nabrak
-          crashSound.play();  // Play crash sound effect
-          return;
-        } else {
-          // === FIX POINT.WAV (SUARA SKOR) ===
-          // Memperlebar jangkauan deteksi agar tidak terlewat oleh FPS browser
-          if (
-            pipe_sprite_props.right < bird_props.left &&
-            pipe_sprite_props.right + move_speed + 2 >= bird_props.left && 
-            element.increase_score === '1'
-          ) {
-            score_val.innerHTML = +score_val.innerHTML + 1;
-            
-            // Play score sound effect
-            scoreSound.currentTime = 0;
-            scoreSound.play().catch(err => console.log(err));
-          }
-          element.style.left = pipe_sprite_props.left - move_speed + 'px';
+    requestAnimationFrame(update);
+    createPipe();
+}
+
+function update() {
+    if (game_state !== 'Play') return;
+
+    // Gerak Burung
+    bird_dy += gravity;
+    let bird_top = parseFloat(bird.style.top) || 40;
+    bird.style.top = (bird_top + bird_dy * 0.2) + 'vh';
+
+    let bird_props = bird.getBoundingClientRect();
+    let screen_bottom = window.innerHeight;
+
+    // Tabrakan Langit/Tanah
+    if (bird_props.top <= 0 || bird_props.bottom >= screen_bottom) {
+        endGame();
+        return;
+    }
+
+    // Gerak Pipa
+    let pipes = document.querySelectorAll('.pipe_sprite');
+    pipes.forEach((pipe) => {
+        let pipe_props = pipe.getBoundingClientRect();
+        let current_left = parseFloat(pipe.style.left) || 100;
+
+        // Cek Tabrakan Pipa
+        if (bird_props.left < pipe_props.right && bird_props.right > pipe_props.left &&
+            bird_props.top < pipe_props.bottom && bird_props.bottom > pipe_props.top) {
+            endGame();
+            return;
         }
-      }
+
+        // Update Skor & Suara Point
+        if (pipe.increase_score === "1" && pipe_props.right < bird_props.left && pipe.dataset.passed !== "true") {
+            pipe.dataset.passed = "true";
+            score++;
+            score_val.innerHTML = score;
+            soundPoint.currentTime = 0;
+            soundPoint.play();
+        }
+
+        // Pindah Pipa
+        if (current_left < -20) {
+            pipe.remove();
+        } else {
+            pipe.style.left = (current_left - move_speed) + 'vw';
+        }
     });
-    requestAnimationFrame(move);
-  }
-  requestAnimationFrame(move);
 
-  let bird_dy = 0;
+    requestAnimationFrame(update);
+}
 
-  // Gabungan fungsi lompat untuk Laptop (Keyboard) dan HP (Sentuhan)
-  function flyBird(e) {
-    if (game_state != 'Play') return;
+let pipe_timer = 0;
+function createPipe() {
+    if (game_state !== 'Play') return;
+
+    if (pipe_timer > 110) {
+        pipe_timer = 0;
+        let gap_pos = Math.floor(Math.random() * 40) + 20; // Posisi celah (20vh - 60vh)
+        let gap_size = 30; // Lebar celah pipa
+
+        // Pipa Atas
+        let pipe_top = document.createElement('div');
+        pipe_top.className = 'pipe_sprite';
+        pipe_top.style.top = '0vh';
+        pipe_top.style.height = (gap_pos - gap_size/2) + 'vh';
+        pipe_top.style.left = '100vw';
+        pipe_top.increase_score = "0";
+        document.body.appendChild(pipe_top);
+
+        // Pipa Bawah
+        let pipe_bottom = document.createElement('div');
+        pipe_bottom.className = 'pipe_sprite';
+        pipe_bottom.style.height = (100 - (gap_pos + gap_size/2)) + 'vh';
+        pipe_bottom.style.top = (gap_pos + gap_size/2) + 'vh';
+        pipe_bottom.style.left = '100vw';
+        pipe_bottom.increase_score = "1";
+        document.body.appendChild(pipe_bottom);
+    }
+    pipe_timer++;
+    requestAnimationFrame(createPipe);
+}
+
+function endGame() {
+    game_state = 'End';
+    bgMusic.pause();
+    soundCrash.play();
     
-    // Daftar tombol laptop atau deteksi sentuhan jari di HP
-    if (e.key == 'ArrowUp' || e.key == ' ' || e.key == 'w' || e.key == 'W' || e.type == 'touchstart') {
-      bird_dy = -7.6;
-      jumpSound.currentTime = 0;
-      jumpSound.volume = 0.3;
-      jumpSound.play().catch(err => console.log(err));
+    if (score > high_score) {
+        high_score = score;
+        localStorage.setItem('fb_best', high_score);
     }
-  }
 
-  // Daftarkan event lompat
-  document.addEventListener('keydown', flyBird);
-  document.addEventListener('touchstart', flyBird);
-
-  function apply_gravity() {
-    if (game_state != 'Play') return;
-
-    bird_dy = bird_dy + gravity;
-
-    // Collision detection dengan langit dan tanah
-    if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
-      game_state = 'End';
-      message.innerHTML = 'Press Enter / Tap to Restart';
-      startSound.pause();
-      crashSound.play();
-      return;
-    }
-    
-    bird.style.top = bird_props.top + bird_dy + 'px';
-    bird_props = bird.getBoundingClientRect();
-    requestAnimationFrame(apply_gravity);
-  }
-  requestAnimationFrame(apply_gravity);
-
-  let pipe_seperation = 0;
-  let pipe_gap = 35;
-
-  function create_pipe() {
-    if (game_state != 'Play') return;
-
-    if (pipe_seperation > 115) {
-      pipe_seperation = 0;
-
-      let pipe_posi = Math.floor(Math.random() * 43) + 8;
-
-      // Pipa Atas
-      let pipe_sprite_inv = document.createElement('div');
-      pipe_sprite_inv.className = 'pipe_sprite';
-      pipe_sprite_inv.style.top = pipe_posi - 70 + 'vh';
-      pipe_sprite_inv.style.left = '100vw';
-      // Kita beri tanda '0' agar sistem tidak menghitung skor ganda pada pipa atas
-      pipe_sprite_inv.increase_score = '0'; 
-
-      document.body.appendChild(pipe_sprite_inv);
-
-      // Pipa Bawah
-      let pipe_sprite = document.createElement('div');
-      pipe_sprite.className = 'pipe_sprite';
-      pipe_sprite.style.top = pipe_posi + pipe_gap + 'vh';
-      pipe_sprite.style.left = '100vw';
-      // Ini yang memicu penambahan skor dan suara point.wav
-      pipe_sprite.increase_score = '1'; 
-
-      document.body.appendChild(pipe_sprite);
-    }
-    pipe_seperation++;
-    requestAnimationFrame(create_pipe);
-  }
-  requestAnimationFrame(create_pipe);
+    document.getElementById('currentScore').innerText = score;
+    document.getElementById('bestScore').innerText = high_score;
+    gameOverScreen.style.display = 'block';
 }
