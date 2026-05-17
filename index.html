@@ -1,37 +1,40 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="favicon.ico">
-    <title>Flappy Bird</title>
+    <title>Game Flappy Bird</title>
     <link rel="stylesheet" href="test.css">
-  </head>
-  <body>  
+</head>
+<body>
     <div class="background"></div>
     <img class="bird" src="Bird-2.png" alt="Bird">
-    
-    <div class="message">Klik Enter / Tap to Start</div>
-    
+
+    <div class="message-container">
+        <div class="message">FLAPPY BIRD</div>
+        <button id="startBtn">START GAME</button>
+        <p class="hint">Press Enter or Tap to Start</p>
+    </div>
+
     <div class="score">
-      <span class="score_title">Score: </span>
-      <span class="score_val">0</span>
+        <span class="score_title">Score: </span>
+        <span class="score_val">0</span>
     </div>
 
     <div class="game-over-screen" id="gameOverScreen">
-      <h2>Game Over</h2>
-      <div class="result-box">
-        <p>Score: <span id="currentScore">0</span></p>
-        <p>Best Score: <span id="bestScore">0</span></p>
-      </div>
-      <button id="restartBtn">Main Lagi</button>
+        <h2>GAME OVER</h2>
+        <div class="result-box">
+            <p>Score: <span id="currentScore">0</span></p>
+            <p>Best Score: <span id="bestScore">0</span></p>
+        </div>
+        <button id="restartBtn">MAIN LAGI</button>
     </div>
 
-    <audio id="bgMusic" src="start.mp3" preload="auto" loop></audio>
-    <audio id="soundJump" src="jump.mp3" preload="auto"></audio>
-    <audio id="soundPoint" src="point.wav" preload="auto"></audio>
-    <audio id="soundCrash" src="crash.wav" preload="auto"></audio>
+    <audio id="bgMusic" src="start.mp3" loop></audio>
+    <audio id="soundJump" src="jump.mp3"></audio>
+    <audio id="soundPoint" src="point.wav"></audio>
+    <audio id="soundCrash" src="crash.wav"></audio>
 
     <script src="test.js" defer></script>
-  </body>
+</body>
 </html>
