@@ -2,7 +2,6 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8">
-    <!-- Meta viewport wajib supaya responsive di HP -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/png" href="favicon.ico">
     <title>Flappy Bird</title>
@@ -12,16 +11,13 @@
     <div class="background"></div>
     <img class="bird" src="Bird-2.png" alt="Bird">
     
-    <!-- Pesan Awal -->
-    <div class="message">Press Enter / Tap to Start</div>
+    <div class="message">Klik Enter / Tap to Start</div>
     
-    <!-- Skor Realtime saat main -->
     <div class="score">
       <span class="score_title">Score: </span>
       <span class="score_val">0</span>
     </div>
 
-    <!-- Pop-up Game Over (Sembunyikan dulu pakai CSS) -->
     <div class="game-over-screen" id="gameOverScreen">
       <h2>Game Over</h2>
       <div class="result-box">
@@ -30,7 +26,10 @@
       </div>
       <button id="restartBtn">Main Lagi</button>
     </div>
+    
+    <audio id="soundJump" src="jump.mp3" preload="auto"></audio>
+    <audio id="soundCrash" src="crash.wav" preload="auto"></audio>
 
-    <script src="test.js"></script>
+    <script src="test.js" defer></script>
   </body>
 </html>
