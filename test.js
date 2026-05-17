@@ -1,266 +1,185 @@
-(function () {
-  // ── Elemen DOM ──────────────────────────────────────────────
-  const root        = document.getElementById('game-root');
-  const birdContainer = document.getElementById('bird-container');
-  const scoreNum    = document.getElementById('score-num');
-  const overlay     = document.getElementById('overlay');
-  const panelTitle  = document.getElementById('panel-title');
-  const panelSub    = document.getElementById('panel-sub');
-  const scoreRows   = document.getElementById('score-rows');
-  const curScoreVal = document.getElementById('cur-score-val');
-  const highScoreVal= document.getElementById('high-score-val');
-  const playBtn     = document.getElementById('play-btn');
-  const flash       = document.getElementById('flash');
-  const medal       = document.getElementById('medal');
+// Seleksi Elemen DOM
+const bird = document.querySelector('.bird');
+const message = document.querySelector('.message');
+const scoreVal = document.querySelector('.score_val');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const currentScoreText = document.getElementById('currentScore');
+const bestScoreText = document.getElementById('bestScore');
+const restartBtn = document.getElementById('restartBtn');
 
-  // ── Konstanta game ──────────────────────────────────────────
-  const BIRD_W       = 56;
-  const BIRD_H       = 56;
-  const GROUND_H     = 60;
-  const GAP          = 140;    // jarak antar pipa atas & bawah
-  const PIPE_W       = 68;
-  const PIPE_SPEED   = 2.8;    // kecepatan pipa bergerak
-  const GRAVITY      = 0.40;   // gravitasi
-  const JUMP_FORCE   = -7.8;   // kekuatan loncat
-  const PIPE_INTERVAL= 1700;   // ms antar pipa baru muncul
+// State Game
+let game_state = 'Start';
+let gravity = 0.4;
+let jump_strength = -7;
+let bird_dy = 0;
+let score = 0;
 
-  // ── State ────────────────────────────────────────────────────
-  let birdY, birdVY, score, pipes, lastPipeTime, animId, lastTime;
-  let gameState = 'idle'; // 'idle' | 'play' | 'dead'
-  let highScore = parseInt(localStorage.getItem('flappy_hs') || '0');
-  highScoreVal.textContent = highScore;
+// Ambil High Score dari LocalStorage
+let high_score = localStorage.getItem('fb_high_score') || 0;
 
-  // ── Ukuran area game ─────────────────────────────────────────
-  function gameW() { return root.offsetWidth; }
-  function gameH() { return root.offsetHeight; }
-  function birdX() { return gameW() * 0.28; }
+// Setingan Gameplay
+const pipe_speed = 4;
+const pipe_gap = 30; // Jarak celah pipa dalam vh (tinggi layar)
 
-  // ── Reset posisi burung ───────────────────────────────────────
-  function resetBird() {
-    birdY  = gameH() * 0.38;
-    birdVY = 0;
-    birdContainer.style.left      = birdX() + 'px';
-    birdContainer.style.top       = birdY + 'px';
-    birdContainer.style.transform = 'rotate(0deg)';
-  }
+// 1. Event Listener untuk Start dan Lompat (Mendukung Laptop & HP)
+window.addEventListener('keydown', handleInput);
+window.addEventListener('touchstart', handleInput);
 
-  // ── Hapus semua pipa ─────────────────────────────────────────
-  function removePipes() {
-    root.querySelectorAll('.pipe').forEach(p => p.remove());
-    pipes = [];
-  }
+function handleInput(e) {
+  // Jika menekan tombol tapi targetnya adalah tombol restart, abaikan agar fungsi tombol tidak terganggu
+  if (e.target === restartBtn) return;
 
-  // ── Buat pasang pipa baru ─────────────────────────────────────
-  function createPipe() {
-    const h      = gameH();
-    const w      = gameW();
-    const minTop = 70;
-    const maxTop = h - GROUND_H - GAP - 70;
-    const topH   = Math.floor(Math.random() * (maxTop - minTop)) + minTop;
-    const botY   = topH + GAP;
-    const botH   = h - GROUND_H - botY;
-
-    // Pipa atas
-    const pipeTop = document.createElement('div');
-    pipeTop.className = 'pipe';
-    pipeTop.style.cssText = `left:${w}px; top:0; height:${topH}px; justify-content:flex-end;`;
-    pipeTop.innerHTML = `
-      <div class="pipe-body"></div>
-      <div class="pipe-cap top-cap"></div>
-    `;
-    root.appendChild(pipeTop);
-
-    // Pipa bawah
-    const pipeBot = document.createElement('div');
-    pipeBot.className = 'pipe';
-    pipeBot.style.cssText = `left:${w}px; top:${botY}px; height:${botH}px; justify-content:flex-start;`;
-    pipeBot.innerHTML = `
-      <div class="pipe-cap bot-cap"></div>
-      <div class="pipe-body"></div>
-    `;
-    root.appendChild(pipeBot);
-
-    pipes.push({
-      top: pipeTop,
-      bot: pipeBot,
-      x: w,
-      topH,
-      botY,
-      scored: false
-    });
-  }
-
-  // ── Efek flash saat nabrak ────────────────────────────────────
-  function doFlash() {
-    flash.style.opacity = '0.8';
-    setTimeout(() => { flash.style.opacity = '0'; }, 120);
-  }
-
-  // ── Loncat ────────────────────────────────────────────────────
-  function jump() {
-    if (gameState !== 'play') return;
-    birdVY = JUMP_FORCE;
-  }
-
-  // ── Mulai game ────────────────────────────────────────────────
-  function startGame() {
-    gameState    = 'play';
-    score        = 0;
-    scoreNum.textContent = '0';
-    overlay.style.display = 'none';
-    removePipes();
-    resetBird();
-    lastPipeTime = 0;
-    lastTime     = null;
-    cancelAnimationFrame(animId);
-    animId = requestAnimationFrame(loop);
-  }
-
-  // ── Game over ─────────────────────────────────────────────────
-  function endGame() {
-    gameState = 'dead';
-    cancelAnimationFrame(animId);
-    doFlash();
-
-    const isNewRecord = score > highScore;
-    if (isNewRecord) {
-      highScore = score;
-      localStorage.setItem('flappy_hs', highScore);
+  if (game_state === 'Start') {
+    // Start game via Enter (laptop) atau Sentuhan (HP)
+    if (e.key === 'Enter' || e.type === 'touchstart') {
+      startGame();
     }
+  } else if (game_state === 'Play') {
+    // Lompat via Spasi/ArrowUp (laptop) atau Sentuhan (HP)
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.type === 'touchstart') {
+      bird_dy = jump_strength;
+    }
+  }
+}
 
-    // Pilih medal berdasarkan skor
-    if (score >= 40)      medal.textContent = '🥇';
-    else if (score >= 20) medal.textContent = '🥈';
-    else if (score >= 10) medal.textContent = '🥉';
-    else                  medal.textContent = '💀';
+// Tombol Restart Click & Tap
+restartBtn.addEventListener('click', restartGame);
 
-    curScoreVal.textContent  = score;
-    highScoreVal.textContent = highScore;
-    panelTitle.textContent   = 'GAME OVER';
-    panelSub.textContent     = isNewRecord ? '🎉 Rekor Baru!' : 'Coba lagi!';
-    scoreRows.style.display  = 'block';
-    playBtn.textContent      = '🔄  MAIN LAGI';
-    overlay.style.display    = 'flex';
+function startGame() {
+  game_state = 'Play';
+  message.style.display = 'none';
+  bird.style.display = 'block';
+  bird.style.top = '40vh';
+  bird_dy = 0;
+  score = 0;
+  scoreVal.innerHTML = score;
+  gameOverScreen.style.display = 'none';
+  
+  // Hapus semua pipa sisa game sebelumnya
+  document.querySelectorAll('.pipe_sprite').forEach(pipe => pipe.remove());
+  
+  // Jalankan loop game
+  requestAnimationFrame(updateGame);
+  createPipes();
+}
+
+// 2. Loop Utama Game
+function updateGame() {
+  if (game_state !== 'Play') return;
+
+  // Terapkan Gravitasi ke Burung
+  bird_dy += gravity;
+  let bird_top = parseFloat(bird.style.top) || 40;
+  
+  // Ubah posisi burung berdasarkan koordinat vh agar responsive
+  let new_top = bird_top + (bird_dy * 0.15); 
+  bird.style.top = new_top + 'vh';
+
+  const bird_props = bird.getBoundingClientRect();
+  const bg_props = document.body.getBoundingClientRect();
+
+  // Batas Atas & Bawah Layar (Tabrakan tanah/langit)
+  if (bird_props.top <= 0 || bird_props.bottom >= bg_props.bottom) {
+    endGame();
+    return;
   }
 
-  // ── Game loop utama ───────────────────────────────────────────
-  function loop(ts) {
-    if (gameState !== 'play') return;
+  // Menggerakkan Pipa & Deteksi Tabrakan
+  let pipes = document.querySelectorAll('.pipe_sprite');
+  pipes.forEach((pipe) => {
+    let pipe_props = pipe.getBoundingClientRect();
 
-    if (!lastTime) lastTime = ts;
-    lastTime = ts;
-
-    const h = gameH();
-    const w = gameW();
-    const bx = birdX();
-
-    // Fisika burung
-    birdVY += GRAVITY;
-    birdY  += birdVY;
-
-    // Rotasi burung sesuai kecepatan
-    const angle = Math.min(Math.max(birdVY * 3.5, -28), 75);
-    birdContainer.style.top       = birdY + 'px';
-    birdContainer.style.transform = `rotate(${angle}deg)`;
-
-    // Cek tabrakan dengan tanah atau langit-langit
-    if (birdY + BIRD_H >= h - GROUND_H || birdY <= 0) {
+    // Deteksi Tabrakan Burung dengan Pipa
+    if (
+      bird_props.left < pipe_props.right &&
+      bird_props.right > pipe_props.left &&
+      bird_props.top < pipe_props.bottom &&
+      bird_props.bottom > pipe_props.top
+    ) {
       endGame();
       return;
     }
 
-    // Buat pipa baru setiap PIPE_INTERVAL ms
-    if (lastPipeTime === 0 || ts - lastPipeTime > PIPE_INTERVAL) {
-      createPipe();
-      lastPipeTime = ts;
+    // Gerakkan pipa ke kiri
+    let pipe_left = parseFloat(pipe.style.left);
+    if (pipe_left <= -10) {
+      // Jika pipa melewati layar kiri, hapus
+      pipe.remove();
+    } else {
+      // Tambah Skor jika berhasil melewati pipa
+      if (pipe.dataset.passed === 'false' && pipe_props.right < bird_props.left) {
+        pipe.dataset.passed = 'true';
+        // Karena ada 2 pipa (atas & bawah), kita hitung skor saat melewati salah satunya saja (misal pipa atas)
+        if(pipe.classList.contains('pipe_top')) {
+          score++;
+          scoreVal.innerHTML = score;
+        }
+      }
+      pipe.style.left = (pipe_left - (pipe_speed * 0.1)) + 'vw';
     }
+  });
 
-    // Hitbox burung (sedikit diperkecil agar fair)
-    const bL = bx + 6;
-    const bR = bx + BIRD_W - 6;
-    const bT = birdY + 6;
-    const bB = birdY + BIRD_H - 6;
+  requestAnimationFrame(updateGame);
+}
 
-    // Update & cek tabrakan pipa
-    for (let i = pipes.length - 1; i >= 0; i--) {
-      const p = pipes[i];
-      p.x -= PIPE_SPEED;
-      p.top.style.left = p.x + 'px';
-      p.bot.style.left = p.x + 'px';
+// 3. Logika Pembuatan Pipa secara Acak
+let pipe_timer = 0;
+function createPipes() {
+  if (game_state !== 'Play') return;
 
-      // Hapus pipa yang sudah keluar layar
-      if (p.x + PIPE_W < 0) {
-        p.top.remove();
-        p.bot.remove();
-        pipes.splice(i, 1);
-        continue;
-      }
+  // Membuat pipa setiap jarak waktu tertentu
+  if (pipe_timer > 120) {
+    pipe_timer = 0;
 
-      // Tambah skor ketika berhasil melewati pipa
-      if (!p.scored && p.x + PIPE_W < bx) {
-        score++;
-        scoreNum.textContent = score;
-        p.scored = true;
-      }
+    // Menentukan posisi tinggi celah secara acak
+    let pipe_posi = Math.floor(Math.random() * (60 - 20)) + 20; 
 
-      // Cek tabrakan dengan pipa atas dan bawah
-      const pL = p.x + 5;
-      const pR = p.x + PIPE_W - 5;
-      const hitTopPipe = bL < pR && bR > pL && bT < p.topH;
-      const hitBotPipe = bL < pR && bR > pL && bB > p.botY;
+    // Pipa Atas
+    let pipe_top = document.createElement('div');
+    pipe_top.className = 'pipe_sprite pipe_top';
+    pipe_top.style.top = '0vh';
+    pipe_top.style.height = (pipe_posi - pipe_gap / 2) + 'vh';
+    pipe_top.style.left = '100vw';
+    pipe_top.dataset.passed = 'false';
 
-      if (hitTopPipe || hitBotPipe) {
-        endGame();
-        return;
-      }
-    }
+    // Pipa Bawah
+    let pipe_bottom = document.createElement('div');
+    pipe_bottom.className = 'pipe_sprite';
+    pipe_bottom.style.top = (pipe_posi + pipe_gap / 2) + 'vh';
+    pipe_bottom.style.height = (100 - (pipe_posi + pipe_gap / 2)) + 'vh';
+    pipe_bottom.style.left = '100vw';
+    pipe_bottom.dataset.passed = 'false';
 
-    animId = requestAnimationFrame(loop);
+    document.body.appendChild(pipe_top);
+    document.body.appendChild(pipe_bottom);
   }
 
-  // ── Event Listeners ───────────────────────────────────────────
+  pipe_timer++;
+  if (game_state === 'Play') {
+    requestAnimationFrame(createPipes);
+  }
+}
 
-  // Tombol Main / Main Lagi
-  playBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (gameState !== 'play') {
-      medal.textContent           = '';
-      scoreRows.style.display     = 'none';
-      panelTitle.textContent      = 'FLAPPY BIRD';
-      panelSub.textContent        = 'Tap atau tekan Spasi untuk terbang!';
-      playBtn.textContent         = '▶  MAIN';
-      startGame();
-    }
-  });
+// 4. Game Over
+function endGame() {
+  game_state = 'End';
+  
+  // Cek & simpan High Score
+  if (score > high_score) {
+    high_score = score;
+    localStorage.setItem('fb_high_score', high_score);
+  }
 
-  // Klik/tap area game untuk loncat
-  root.addEventListener('click', (e) => {
-    if (e.target === playBtn) return;
-    if (gameState === 'play') jump();
-  });
+  // Tampilkan skor di Pop-up
+  currentScoreText.innerText = score;
+  bestScoreText.innerText = high_score;
+  
+  // Munculkan Screen Game Over
+  gameOverScreen.style.display = 'block';
+}
 
-  // Touch untuk mobile
-  root.addEventListener('touchstart', (e) => {
-    if (gameState === 'play') {
-      e.preventDefault();
-      jump();
-    }
-  }, { passive: false });
-
-  // Keyboard: Spasi, ArrowUp, W, Enter
-  document.addEventListener('keydown', (e) => {
-    if (
-      e.code === 'Space'   ||
-      e.code === 'ArrowUp' ||
-      e.key  === 'w'       ||
-      e.key  === 'W'
-    ) {
-      e.preventDefault();
-      if (gameState === 'play') jump();
-    }
-    if (e.code === 'Enter' && gameState !== 'play') {
-      startGame();
-    }
-  });
-
-})();
+// 5. Reset Game saat Klik "Main Lagi"
+function restartGame(e) {
+  e.stopPropagation(); // Biar input kliknya ga memicu lompat burung saat game restart
+  startGame();
+}
