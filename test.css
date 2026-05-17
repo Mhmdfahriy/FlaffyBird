@@ -2,8 +2,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
-  /* Mencegah double-tap zoom di HP */
+  font-family: 'Arial', sans-serif;
+  /* Anti double-tap zoom di HP supaya responsif */
   touch-action: manipulation; 
   user-select: none;
 }
@@ -29,23 +29,23 @@ body {
 }
 
 .bird {
-  height: 50px; /* Diperkecil sedikit agar lebih pas di HP */
+  height: 50px;
   width: 50px;
   position: fixed;
   top: 40vh;
   left: 20vw;
   z-index: 100;
-  display: none; /* Muncul setelah game mulai */
+  display: none; /* Muncul hanya saat game mulai */
 }
 
-/* Pipe Atas dan Bawah */
+/* Pipa Game */
 .pipe_sprite {
   position: fixed;
   left: 100vw;
-  width: 55px; /* Standar ukuran pipa */
+  width: 60px;
   background-color: green;
   border: 3px solid #000;
-  border-radius: 5px;
+  border-radius: 4px;
   z-index: 5;
 }
 
@@ -53,13 +53,12 @@ body {
   position: fixed;
   z-index: 10;
   width: 100%;
-  font-size: 5vh;
+  font-size: 4.5vh;
   font-weight: bold;
   color: white;
   text-shadow: 2px 2px #000;
-  top: 40vh;
+  top: 45vh;
   text-align: center;
-  cursor: pointer;
 }
 
 .score {
@@ -77,14 +76,14 @@ body {
   color: gold;
 }
 
-/* Pop-up Game Over */
+/* Tampilan Pop-up Game Over */
 .game-over-screen {
-  display: none; /* Ditampilkan via JS */
+  display: none; 
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 30px;
   border-radius: 15px;
@@ -92,6 +91,7 @@ body {
   z-index: 200;
   border: 4px solid gold;
   min-width: 280px;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
 }
 
 .game-over-screen h2 {
@@ -107,21 +107,22 @@ body {
 
 #restartBtn {
   margin-top: 15px;
-  padding: 10px 25px;
-  font-size: 2.5vh;
+  padding: 12px 30px;
+  font-size: 2.3vh;
   font-weight: bold;
   background-color: gold;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   color: black;
+  transition: 0.1s;
 }
 
 #restartBtn:active {
   background-color: orange;
 }
 
-/* Responsive Scaling untuk Layar Laptop/Desktop */
+/* Responsivitas untuk Layar Laptop/Desktop */
 @media (min-width: 768px) {
   .bird {
     width: 60px;
