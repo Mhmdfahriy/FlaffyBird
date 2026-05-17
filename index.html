@@ -1,42 +1,36 @@
 <!DOCTYPE html>
 <html lang="id">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8">
+    <!-- Meta viewport wajib supaya responsive di HP -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="favicon.ico">
     <title>Flappy Bird</title>
-    <link rel="stylesheet" href="tes.css"/>
+    <link rel="stylesheet" href="test.css">
   </head>
-  <body>
-    <div id="game-root">
-      <div id="bg"></div>
-      <div id="ground"></div>
-      <div id="bird-container">
-        <img id="bird-img" src="Bird-2.png" alt="bird" />
-      </div>
-      <div id="score-display">
-        <div id="score-num">0</div>
-      </div>
-      <div id="flash"></div>
-      <div id="overlay">
-        <div id="panel">
-          <div id="medal"></div>
-          <div id="panel-title">FLAPPY BIRD</div>
-          <div id="panel-sub">Tap atau tekan Spasi untuk terbang!</div>
-          <div id="score-rows">
-            <div class="score-row">
-              <span class="score-label">Skor</span>
-              <span class="score-value" id="cur-score-val">0</span>
-            </div>
-            <div class="score-row">
-              <span class="score-label">Tertinggi</span>
-              <span class="score-value gold" id="high-score-val">0</span>
-            </div>
-          </div>
-          <button id="play-btn">▶  MAIN</button>
-        </div>
-        <div id="hint">Tap layar / Spasi / ↑ untuk loncat</div>
-      </div>
+  <body>  
+    <div class="background"></div>
+    <img class="bird" src="Bird-2.png" alt="Bird">
+    
+    <!-- Pesan Awal -->
+    <div class="message">Press Enter / Tap to Start</div>
+    
+    <!-- Skor Realtime saat main -->
+    <div class="score">
+      <span class="score_title">Score: </span>
+      <span class="score_val">0</span>
     </div>
+
+    <!-- Pop-up Game Over (Sembunyikan dulu pakai CSS) -->
+    <div class="game-over-screen" id="gameOverScreen">
+      <h2>Game Over</h2>
+      <div class="result-box">
+        <p>Score: <span id="currentScore">0</span></p>
+        <p>Best Score: <span id="bestScore">0</span></p>
+      </div>
+      <button id="restartBtn">Main Lagi</button>
+    </div>
+
     <script src="test.js"></script>
   </body>
 </html>
