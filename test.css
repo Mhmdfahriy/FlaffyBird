@@ -1,137 +1,126 @@
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Arial', sans-serif;
-  /* Anti double-tap zoom di HP supaya responsif */
-  touch-action: manipulation; 
-  user-select: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial Black', sans-serif;
+    touch-action: manipulation;
+    user-select: none;
 }
 
 body {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: #000;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: #70c5ce;
 }
 
 .background {
-  height: 100vh;
-  width: 100vw;
-  background-image: url('bg-flappy-bird.gif');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
+    height: 100vh;
+    width: 100vw;
+    background-image: url('bg-flappy-bird.gif');
+    background-size: cover;
+    background-position: center;
+    position: absolute;
+    z-index: 1;
 }
 
 .bird {
-  height: 50px;
-  width: 50px;
-  position: fixed;
-  top: 40vh;
-  left: 20vw;
-  z-index: 100;
-  display: none; /* Muncul hanya saat game mulai */
+    height: 45px;
+    width: 45px;
+    position: fixed;
+    top: 40vh;
+    left: 20vw;
+    z-index: 100;
+    display: none;
 }
 
-/* Pipa Game */
 .pipe_sprite {
-  position: fixed;
-  left: 100vw;
-  width: 60px;
-  background-color: green;
-  border: 3px solid #000;
-  border-radius: 4px;
-  z-index: 5;
+    position: fixed;
+    left: 100vw;
+    width: 18vw; /* Ukuran pipa fleksibel di HP */
+    background-color: #73bf2e;
+    border: 3px solid #543847;
+    z-index: 5;
+}
+
+/* UI Tengah (Start Message) */
+.message-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    text-align: center;
 }
 
 .message {
-  position: fixed;
-  z-index: 10;
-  width: 100%;
-  font-size: 4.5vh;
-  font-weight: bold;
-  color: white;
-  text-shadow: 2px 2px #000;
-  top: 45vh;
-  text-align: center;
+    font-size: 8vh;
+    color: white;
+    text-shadow: 4px 4px #543847;
+    margin-bottom: 20px;
+}
+
+#startBtn, #restartBtn {
+    padding: 15px 40px;
+    font-size: 3vh;
+    background-color: #f7951e;
+    color: white;
+    border: 4px solid white;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 5px #ba6b0d;
+}
+
+#startBtn:active, #restartBtn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px #ba6b0d;
+}
+
+.hint {
+    color: white;
+    margin-top: 15px;
+    font-size: 2vh;
 }
 
 .score {
-  position: fixed;
-  z-index: 10;
-  font-size: 4vh;
-  font-weight: bold;
-  color: white;
-  text-shadow: 2px 2px #000;
-  top: 20px;
-  left: 20px;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    font-size: 4vh;
+    color: white;
+    text-shadow: 2px 2px #000;
 }
 
-.score_val {
-  color: gold;
-}
-
-/* Tampilan Pop-up Game Over */
+/* Modal Game Over */
 .game-over-screen {
-  display: none; 
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 30px;
-  border-radius: 15px;
-  text-align: center;
-  z-index: 200;
-  border: 4px solid gold;
-  min-width: 280px;
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(222, 216, 149, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    border: 5px solid #543847;
+    text-align: center;
+    z-index: 300;
 }
 
 .game-over-screen h2 {
-  font-size: 4vh;
-  color: #ff4a4a;
-  margin-bottom: 15px;
+    color: #e86101;
+    font-size: 5vh;
+    margin-bottom: 20px;
 }
 
 .result-box p {
-  font-size: 2.5vh;
-  margin: 10px 0;
+    font-size: 3vh;
+    margin: 10px 0;
+    color: #543847;
 }
 
-#restartBtn {
-  margin-top: 15px;
-  padding: 12px 30px;
-  font-size: 2.3vh;
-  font-weight: bold;
-  background-color: gold;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  color: black;
-  transition: 0.1s;
-}
-
-#restartBtn:active {
-  background-color: orange;
-}
-
-/* Responsivitas untuk Layar Laptop/Desktop */
+/* Mobile Adjustments */
 @media (min-width: 768px) {
-  .bird {
-    width: 60px;
-    height: 60px;
-  }
-  .pipe_sprite {
-    width: 80px;
-  }
-  .message {
-    font-size: 6vh;
-  }
+    .pipe_sprite { width: 80px; }
+    .bird { width: 60px; height: 60px; }
 }
